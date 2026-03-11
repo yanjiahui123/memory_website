@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { userApi } from '../api/client';
 import { useAsync } from '../hooks/useAsync';
 import { useToast } from '../contexts/ToastContext';
-import { Loading, ErrorMsg, EmptyState, Badge, ConfirmModal } from '../components/UI';
+import { Loading, ErrorMsg, EmptyState, Badge, ConfirmModal, Pagination } from '../components/UI';
 import type { User, UserRole } from '../types';
 
 const ROLE_OPTIONS: { value: UserRole | ''; label: string }[] = [
@@ -18,6 +18,8 @@ const ROLE_BADGE: Record<UserRole, { type: string; label: string }> = {
   user: { type: 'gray', label: '普通用户' },
 };
 
+const USER_PAGE_SIZE = 20;
+
 export default function UserManagement() {
   const { data: users, loading, error, refetch } = useAsync(() => userApi.list());
   const { addToast } = useToast();
@@ -25,6 +27,7 @@ export default function UserManagement() {
   const [searchQ, setSearchQ] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [deactivateTarget, setDeactivateTarget] = useState<User | null>(null);
+  const [page, setPage] = useState(1);
 
   const filtered = users?.filter(u => {
     if (roleFilter && u.role !== roleFilter) return false;
@@ -36,6 +39,9 @@ export default function UserManagement() {
     }
     return true;
   }) ?? [];
+
+  const totalCount = filtered.length;
+  const pagedUsers = filtered.slice((page - 1) * USER_PAGE_SIZE, page * USER_PAGE_SIZE);
 
   async function handleDeactivate() {
     if (!deactivateTarget) return;
@@ -61,13 +67,13 @@ export default function UserManagement() {
 
       <div className="filter-bar" style={{ marginBottom: 16 }}>
         {ROLE_OPTIONS.map(r => (
-          <button key={r.value} className={`filter-pill ${roleFilter === r.value ? 'filter-pill--active' : ''}`} onClick={() => setRoleFilter(r.value)}>
+          <button key={r.value} className={`filter-pill ${roleFilter === r.value ? 'filter-pill--active' : ''}`} onClick={() => { setRoleFilter(r.value); setPage(1); }}>
             {r.label}
           </button>
         ))}
         <input
           value={searchQ}
-          onChange={e => setSearchQ(e.target.value)}
+          onChange={e => { setSearchQ(e.target.value); setPage(1); }}
           placeholder="搜索工号或姓名..."
           style={{ maxWidth: 200, fontSize: 13, padding: '6px 12px' }}
         />
