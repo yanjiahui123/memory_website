@@ -50,11 +50,10 @@ function MemoryTab({ tab, boardId }: { tab: Exclude<TabKey, 'quality_alert'>; bo
   const [batchLoading, setBatchLoading] = useState(false);
 
   const nsFilter = boardId ? { namespace_id: boardId } : {};
-  const params: MemoryListParams = tab === 'pending'
-    ? { ...nsFilter, pending_human_confirm: true, page, size: PAGE_SIZE }
-    : tab === 'low_quality'
-    ? { ...nsFilter, lifecycle_status: 'ACTIVE', page, size: PAGE_SIZE }
-    : { ...nsFilter, pending_human_confirm: true, page, size: PAGE_SIZE };
+  const base = { ...nsFilter, page, size: PAGE_SIZE };
+  const params: MemoryListParams = tab === 'low_quality'
+    ? { ...base, lifecycle_status: 'ACTIVE' }
+    : { ...base, pending_human_confirm: true };
 
   const { data, loading, error, refetch } = useAsync(() => memoryApi.list(params), [tab, boardId, page]);
   const items = data?.items;
