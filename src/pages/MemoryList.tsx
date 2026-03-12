@@ -209,7 +209,9 @@ function useUrlFilters(boardId?: string): [FiltersState, (key: string, val: stri
       const next = new URLSearchParams();
       Object.entries(f).forEach(([k, v]) => {
         const strV = String(v);
-        const defaultV = k === 'page' ? '1' : (k === 'namespace_id' ? (boardId || '') : '');
+        let defaultV = '';
+        if (k === 'page') defaultV = '1';
+        else if (k === 'namespace_id') defaultV = boardId || '';
         if (strV && strV !== defaultV) next.set(k, strV);
       });
       return next;
@@ -288,13 +290,16 @@ export default function MemoryList() {
         </div>
       </div>
 
-      {loading ? <Loading /> :
-        error ? <ErrorMsg message={error} onRetry={refetch} /> :
-        !memories?.length ? <EmptyState icon="🧠" message="没有匹配的记忆" /> :
-        <div className="card" style={{ padding: '0 16px' }}>
-          {memories.map(m => <MemoryRow key={m.id} memory={m} keyword={keyword} onRestored={refetch} />)}
-        </div>
-      }
+      {(() => {
+        if (loading) return <Loading />;
+        if (error) return <ErrorMsg message={error} onRetry={refetch} />;
+        if (!memories?.length) return <EmptyState icon="🧠" message="没有匹配的记忆" />;
+        return (
+          <div className="card" style={{ padding: '0 16px' }}>
+            {memories.map(m => <MemoryRow key={m.id} memory={m} keyword={keyword} onRestored={refetch} />)}
+          </div>
+        );
+      })()}
 
       <Pagination page={filters.page} total={totalCount} size={PAGE_SIZE} onChange={p => setFilters({ ...filters, page: p })} />
     </div>
