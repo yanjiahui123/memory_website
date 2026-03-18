@@ -6,7 +6,7 @@ import { useUrlState } from '../hooks/useUrlState';
 import { Loading, ErrorMsg, EmptyState, Badge, Pagination } from '../components/UI';
 import type { OperationLog } from '../types';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 30;
 
 const OPERATION_LABELS: Record<string, string> = {
   ADD: '创建',
