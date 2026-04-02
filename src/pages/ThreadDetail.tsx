@@ -150,14 +150,26 @@ export default function ThreadDetail() {
     }
   }
 
+  const isProd = import.meta.env.MODE === 'production';
+  const isBeta = import.meta.env.MODE === 'beta';
+
+  const prefix = (() => {
+    if (isProd) {
+      return 'https://ai.libing.yjh.com/forum_memory/api';
+    } else if (isBeta) {
+      return 'https://ai-test.libing.yjh.com/forum_memory_beta/api';
+    }
+    return '/api';
+  })();
+  const streamUrl = `${prefix}/threads/${threadId}/ai-answer/stream`;
+
   function connectStream() {
     if (esRef.current) esRef.current.close();
     setStreamingContent('');
     setStreamPhase('idle');
     setAiLoading(true);
-    const token = getToken();
-    const qs = token ? `?token=${encodeURIComponent(token)}` : '';
-    const es = new EventSource(`/api/v1/threads/${threadId}/ai-answer/stream${qs}`);
+
+    const es = new EventSource(streamUrl);
     esRef.current = es;
     es.onmessage = (event) => {
       try {

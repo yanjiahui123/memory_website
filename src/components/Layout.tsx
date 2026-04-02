@@ -47,22 +47,26 @@ function ForumSidebar({ boards, currentBoardId, currentUser, locationPath, onClo
   return (
     <>
       <div className="sidebar__section">板块</div>
-      {activeBoards === null ? (
-        <div style={{ padding: '8px 20px', fontSize: 12, color: 'var(--text-ter)' }}>加载中...</div>
-      ) : activeBoards.length === 0 ? (
-        <div style={{ padding: '8px 20px', fontSize: 12, color: 'var(--text-ter)' }}>暂无板块</div>
-      ) : (
-        activeBoards.map(b => (
-          <Link
-            key={b.id}
-            to={`/boards/${b.id}/threads`}
-            className={`sidebar__item ${currentBoardId === b.id ? 'sidebar__item--active' : ''}`}
-            onClick={onClose}
-          >
-            {b.display_name}
-          </Link>
-        ))
-      )}
+      {(() => {
+        if (activeBoards === null) {
+          return <div style={{ padding: '8px 20px', fontSize: 12, color: 'var(--text-ter)' }}>加载中...</div>
+        }
+        if (activeBoards.length === 0) {
+          return <div style={{ padding: '8px 20px', fontSize: 12, color: 'var(--text-ter)' }}>暂无板块</div>
+        }
+        return (
+          activeBoards.map(b => (
+            <Link
+              key={b.id}
+              to={`/boards/${b.id}/threads`}
+              className={`sidebar__item ${currentBoardId === b.id ? 'sidebar__item--active' : ''}`}
+              onClick={onClose}
+            >
+              {b.display_name}
+            </Link>
+          ))
+        )
+      })()}
       {currentUser && (
         <>
           <div className="sidebar__section" style={{ marginTop: 12 }}>其他</div>
