@@ -20,12 +20,11 @@ import ImportTopics from './pages/ImportTopics';
 import UserManagement from './pages/UserManagement';
 import AuditLog from './pages/AuditLog';
 import MyPosts from './pages/MyPosts';
+import JoinBoard from './pages/JoinBoard';
 
 export default function App() {
-    const isProd = import.meta.env.MODE === 'production';
-    const basename = isProd ? "/forum_memory/dashboard" : "/forum_memory_beta/dashboard";
   return (
-    <BrowserRouter basename={basename}>
+    <BrowserRouter>
       <UserProvider>
       <ToastProvider>
       <ErrorBoundary>
@@ -39,6 +38,7 @@ export default function App() {
           <Route path="/threads/:threadId" element={<ThreadDetail />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/my-posts" element={<MyPosts />} />
+          <Route path="/join/:code" element={<JoinBoard />} />
 
           {/* Admin routes — protected by AdminGuard */}
           <Route element={<AdminGuard />}>
