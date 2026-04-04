@@ -24,8 +24,10 @@ import MyPosts from './pages/MyPosts';
 import JoinBoard from './pages/JoinBoard';
 
 export default function App() {
+    const isProd = import.meta.env.MODE === 'production';
+    const basename = isProd ? "/forum_memory/dashboard" : "/forum_memory_beta/dashboard";
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <UserProvider>
       <FollowProvider>
       <ToastProvider>
