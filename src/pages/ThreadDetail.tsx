@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { threadApi, feedbackApi, memoryApi, namespaceApi, getToken } from '../api/client';
+import { threadApi, feedbackApi, memoryApi, namespaceApi } from '../api/client';
 import { useAsync } from '../hooks/useAsync';
 import { useUser } from '../contexts/UserContext';
 import { useToast } from '../contexts/ToastContext';
@@ -151,17 +151,26 @@ export default function ThreadDetail() {
     }
   }
 
+  const isProd = import.meta.env.MODE === 'production';
+  const isBeta = import.meta.env.MODE === 'beta';
+
+  const prefix = (() => {
+    if (isProd) {
+      return 'https://ai.libing.yjh.com/forum_memory/api';
+    } else if (isBeta) {
+      return 'https://ai-test.libing.yjh.com/forum_memory_beta/api';
+    }
+    return '/api'
+  })();
+  const streamUrl = `${prefix}/threads/${threadId}/ai-answer/stream`;
+
   function connectStream(force = false) {
     if (esRef.current) esRef.current.close();
     setStreamingContent('');
     setStreamPhase('idle');
     setAiLoading(true);
-    const token = getToken();
-    const params = new URLSearchParams();
-    if (token) params.set('token', token);
-    if (force) params.set('force', 'true');
-    const qs = params.toString() ? `?${params}` : '';
-    const es = new EventSource(`/api/v1/threads/${threadId}/ai-answer/stream${qs}`);
+
+    const es = new EventSource(streamUrl);
     esRef.current = es;
     es.onmessage = (event) => {
       try {
