@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { threadApi, feedbackApi, memoryApi, namespaceApi } from '../api/client';
+import { threadApi, feedbackApi, memoryApi, namespaceApi, getToken } from '../api/client';
 import { useAsync } from '../hooks/useAsync';
 import { useUser } from '../contexts/UserContext';
 import { useToast } from '../contexts/ToastContext';
@@ -151,26 +151,17 @@ export default function ThreadDetail() {
     }
   }
 
-  const isProd = import.meta.env.MODE === 'production';
-  const isBeta = import.meta.env.MODE === 'beta';
-
-  const prefix = (() => {
-    if (isProd) {
-      return 'https://ai.libing.yjh.com/forum_memory/api';
-    } else if (isBeta) {
-      return 'https://ai-test.libing.yjh.com/forum_memory_beta/api';
-    }
-    return '/api'
-  })();
-  const streamUrl = `${prefix}/threads/${threadId}/ai-answer/stream`;
-
   function connectStream(force = false) {
     if (esRef.current) esRef.current.close();
     setStreamingContent('');
     setStreamPhase('idle');
     setAiLoading(true);
-
-    const es = new EventSource(streamUrl);
+    const token = getToken();
+    const params = new URLSearchParams();
+    if (token) params.set('token', token);
+    if (force) params.set('force', 'true');
+    const qs = params.toString() ? `?${params}` : '';
+    const es = new EventSource(`/api/v1/threads/${threadId}/ai-answer/stream${qs}`);
     esRef.current = es;
     es.onmessage = (event) => {
       try {
@@ -220,22 +211,18 @@ export default function ThreadDetail() {
   const AI_PLACEHOLDER = '<!-- ai_generating -->';
   const hasPlaceholderAi = !!(comments?.some(c => c.is_ai && c.content === AI_PLACEHOLDER));
 
-  // Auto-connect streaming for new threads with no comments
+  // Auto-connect streaming for:
+  // - new threads with no comments (first generation)
+  // - placeholder exists (generation in progress, resume via SSE)
   useEffect(() => {
     if (thread?.status !== 'OPEN') return;
     if (autoConnectAttempted.current) return;
-    if ((thread?.comment_count ?? 0) > 0) return;
+    const noComments = (thread?.comment_count ?? 0) === 0;
+    if (!noComments && !hasPlaceholderAi) return;
     autoConnectAttempted.current = true;
     connectStream();
     return () => { esRef.current?.close(); esRef.current = null; };
-  }, [thread?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Poll for completion when placeholder exists (backend generating in background)
-  useEffect(() => {
-    if (!hasPlaceholderAi) return;
-    const timer = setInterval(() => { refetchComments(); }, 3000);
-    return () => clearInterval(timer);
-  }, [hasPlaceholderAi]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [thread?.id, hasPlaceholderAi]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <Loading />;
   if (error) return <ErrorMsg message={error} />;
