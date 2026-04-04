@@ -159,15 +159,15 @@ export default function NewThread() {
                     <span style={{ fontSize: 11, color: 'var(--text-ter)' }}>💬 {t.comment_count} 回复</span>
                   </div>
                 </div>
-                <Link
-                  to={`/threads/${t.id}`}
+                <a
+                  href={`/threads/${t.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-sm btn-secondary"
                   style={{ textDecoration: 'none', flexShrink: 0, fontSize: 12 }}
                 >
                   查看 →
-                </Link>
+                </a>
               </div>
             ))}
             <div style={{ padding: '8px 14px', borderTop: '1px solid var(--border)', textAlign: 'right' }}>
