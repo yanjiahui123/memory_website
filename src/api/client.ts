@@ -9,20 +9,7 @@ import type {
   NamespaceMember, NamespaceInvite, UserSearchResult, DeptOption,
 } from '../types';
 
-const BASE = '/api/v1';
-
-/** JWT token management */
-export function getToken(): string {
-  return localStorage.getItem('jwt_token') || '';
-}
-
-export function setToken(token: string): void {
-  localStorage.setItem('jwt_token', token);
-}
-
-export function clearToken(): void {
-  localStorage.removeItem('jwt_token');
-}
+const BASE = import.meta.env.VITE_APP_API_BASE_URL;
 
 /**
  * Build auth headers.
@@ -30,20 +17,18 @@ export function clearToken(): void {
  * sent automatically by the browser via credentials: 'include'.
  */
 function authHeaders(): Record<string, string> {
-  const token = getToken();
-  if (token) {
-    return { Authorization: `Bearer ${token}` };
-  }
   return {};
 }
 
+export const w3loginProd: () => void = () => {
+  const redirectUrl = encodeURIComponent(window.location.href);
+  window.location.href = `https://login.yjh.com/login1/?redirect=${redirectUrl}`;
+};
+
 /** Handle 401 responses: clear stale token and redirect */
 function handleUnauthorized(): void {
-  clearToken();
   // Avoid redirect loops: only redirect if not already on login-related page
-  if (!window.location.pathname.startsWith('/login')) {
-    window.location.href = '/boards';
-  }
+  w3loginProd();
 }
 
 interface RequestOptions extends RequestInit {
@@ -350,18 +335,6 @@ export const inviteApi = {
   revoke: (nsId: string, inviteId: string) => del<null>(`/namespaces/${nsId}/invites/${inviteId}`),
   getInfo: (code: string) => get<{ namespace_id: string; namespace_display_name: string; role: string; expires_at: string | null }>(`/invites/${code}`),
   join: (code: string) => post<{ namespace_id: string; namespace_display_name: string; role: string }>(`/invites/${code}/join`),
-};
-
-// ── Share Links ────────────────────────────────
-export const shareLinkApi = {
-  create: (data: { name: string; namespace_ids: string[] }) =>
-    post<import('../types').BoardShareLink>('/share-links', data),
-  list: () => get<import('../types').BoardShareLink[]>('/share-links'),
-  revoke: (linkId: string) => del<null>(`/share-links/${linkId}`),
-  getInfo: (code: string) =>
-    get<import('../types').BoardShareLinkInfo>(`/share-links/code/${code}`),
-  join: (code: string) =>
-    post<{ joined: import('../types').BoardShareLinkNamespaceInfo[]; count: number }>(`/share-links/code/${code}/join`),
 };
 
 // ── Uploads ──────────────────────────────────
